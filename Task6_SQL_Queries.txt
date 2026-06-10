@@ -1,0 +1,112 @@
+         Window Function Queries
+
+SELECT
+    Customer_ID,
+    Sales,
+    RANK() OVER (ORDER BY Sales DESC) AS Sales_Rank
+FROM orders;
+
+SELECT
+    Customer_ID,
+    Sales,
+    DENSE_RANK() OVER (ORDER BY Sales DESC) AS `Dense Rank`
+FROM orders;
+
+SELECT
+    Order_Date,
+    Sales,
+    LAG(Sales) OVER (ORDER BY Order_Date) AS Previous_Sales
+FROM orders;
+
+             CTE
+
+WITH CustomerSales AS
+(
+    SELECT
+        Customer_ID,
+        SUM(Sales) AS TotalSales
+    FROM orders
+    GROUP BY Customer_ID
+)
+SELECT * FROM CustomerSales;
+
+                 Views
+
+      CREATE VIEW vw_CustomerKPIs AS
+
+SELECT
+    c.Customer_ID,
+    c.Customer_Name,
+    c.Region,
+    c.Segment,
+    COUNT(o.Order_ID) AS TotalOrders,
+    SUM(o.Sales) AS TotalRevenue,
+    SUM(o.Profit) AS TotalProfit
+FROM customers c
+JOIN orders o
+ON c.Customer_ID = o.Customer_ID
+GROUP BY
+    c.Customer_ID,
+    c.Customer_Name,
+    c.Region,
+    c.Segment;
+
+     CREATE VIEW vw_MonthlyTrend AS
+
+
+SELECT
+    DATE_FORMAT(Order_Date,'%Y-%m') AS Month,
+    SUM(Sales) AS TotalRevenue,
+    SUM(Profit) AS TotalProfit
+FROM orders
+GROUP BY DATE_FORMAT(Order_Date,'%Y-%m');
+
+
+     CREATE VIEW vw_ProductPerformance AS
+SELECT
+    p.Product_ID,
+    p.Category,
+    p.Sub_Category,
+    SUM(o.Sales) AS TotalRevenue,
+    SUM(o.Profit) AS TotalProfit
+FROM products p
+JOIN orders o
+ON p.Product_ID = o.Product_ID
+GROUP BY
+    p.Product_ID,
+    p.Category,
+    p.Sub_Category;
+
+    CREATE VIEW vw_RegionalSummary AS
+
+SELECT
+    c.Region,
+    SUM(o.Sales) AS TotalRevenue,
+    SUM(o.Profit) AS TotalProfit,
+    COUNT(o.Order_ID) AS TotalOrders
+FROM customers c
+JOIN orders o
+ON c.Customer_ID = o.Customer_ID
+GROUP BY c.Region;
+
+
+        Stored Procedure
+DELIMITER $$
+
+CREATE PROCEDURE sp_MonthlySummary()
+BEGIN
+    SELECT
+        DATE_FORMAT(Order_Date, '%Y-%m') AS Month,
+        SUM(Sales) AS TotalRevenue,
+        SUM(Profit) AS TotalProfit
+    FROM orders
+    GROUP BY DATE_FORMAT(Order_Date, '%Y-%m');
+END $$
+
+DELIMITER ;
+
+CALL sp_MonthlySummary();
+
+
+
+
